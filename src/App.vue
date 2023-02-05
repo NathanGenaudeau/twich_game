@@ -1,24 +1,77 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+<script>
+  //import HelloWorld from './components/HelloWorld.vue'
+  //import TheWelcome from './components/TheWelcome.vue'
+  import tmi from 'tmi.js';
+
+  export default {
+    name: 'App',
+    components: {
+      //HelloWorld,
+      //TheWelcome
+    },
+    data() {
+      return {
+        users: [],
+        started: false
+      }
+    },
+    mounted() {
+      this.connect();
+    },
+    methods: {
+      connect() {
+        const client = new tmi.Client({
+          channels: [ 'plotsdechantier' ]
+        });
+
+        client.connect();
+
+        client.on('message', (channel, tags, message, self) => {
+          if (!this.started) {
+            if (message === '!play' && !this.users.some(user => user.id === tags['user-id'])) {
+              this.users.push({
+                id: tags['user-id'],
+                name: tags['display-name'],
+                score: 0
+              });
+            }
+          } else {
+            const user = this.users.find(user => user.id === tags['user-id']);
+            if (user) {
+              user.score += 1;
+            }
+          }
+        });
+      }
+    }
+  }
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <!--<img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
-    </div>
+    </div>-->
   </header>
 
   <main>
-    <TheWelcome />
+    <div v-for="user in users">
+      <p>{{ user.name }} 
+        <span v-if="started">
+          : {{ user.score }}
+        </span>
+      </p>
+
+    </div>
+    <button @click="started = true">Start</button>
+    <!--<TheWelcome />-->
   </main>
 </template>
 
 <style scoped>
-header {
+/*header {
   line-height: 1.5;
 }
 
@@ -43,5 +96,5 @@ header {
     place-items: flex-start;
     flex-wrap: wrap;
   }
-}
+}*/
 </style>
